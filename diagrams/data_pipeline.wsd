@@ -1,15 +1,47 @@
 @startuml Data Pipeline
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+title "Data Pipeline"
+footer "Disponível em https://github.com/juliocezar84/acmackenzie"
+LAYOUT_LEFT_RIGHT()
 
 Person(user, "Usuário")
-System_Boundary(datavis, "Data Visualization") {
-    Container(dash, "Dashboard", "Qlik, Power BI", "Tool for dashboard")
+
+System_Boundary(olap, "OLAP"){
+    System_Boundary(datavis, "Data Visualization") {
+        Container(dash, "Dashboard", "Qlik, Power BI", "Tool for dashboard")
+    }
+
+    System_Boundary(analytics, "Data Analytics") {
+        ContainerDb(dw, "Data Warehouse", "Microsoft SQL/Oracle", $sprite="msql_server")
+        Container(transformation, "Transformation", "dbt", "Padronização e limpeza")
+    }
+
+    System_Boundary(ingestion, "Data Ingestion") {
+        ContainerDb(raw, "Raw")
+        Container(extraction, "Extraction", "airbyte", "Extração de dados")
+    }
 }
 
-System_Boundary(database, "Persistence Layer") {
-    ContainerDb(db, "Database", "Microsoft SQL/Oracle", $sprite="msql_server")
+System_Boundary(oltp, "OLTP"){
+    ContainerDb(external_db, "External databases", "SAP, Totvs", $sprite="msql_server")
+    ContainerQueue(external_queue, "Data Stream", "Kafka, RabbitMQ")
+    Container(external_api, "APIs")
+    ContainerDb(external_storage, "External Storage", "Google Drive, Dropbox")
 }
+
+Rel(oltp, olap, "Fornecer dados")
+Rel(ingestion, analytics, "Atualizar dados")
 
 Rel(user, dash, "Visualizar")
-Rel(dash, db, "Carregar dados")
+Rel(dash, dw, "Carregar dados")
+
+Rel(transformation, dw, "Persistir dados transformados")
+Rel(extraction, raw, "Persistir dados transformados")
+
+Rel(external_db, extraction, "Coletar dados")
+Rel(external_queue, extraction, "Coletar dados")
+Rel(external_api, extraction, "Coletar dados")
+Rel(external_storage, extraction, "Coletar dados")
+Rel(raw, transformation, "Persistir dados")
+
 @enduml
