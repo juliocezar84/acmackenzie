@@ -1,0 +1,15 @@
+@startuml Data Pipeline
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(user, "Usuário")
+System_Boundary(datavis, "Data Visualization") {
+    Container(dash, "Dashboard", "Qlik, Power BI", "Tool for dashboard")
+}
+
+System_Boundary(database, "Persistence Layer") {
+    ContainerDb(db, "Database", "Microsoft SQL/Oracle", $sprite="msql_server")
+}
+
+Rel(user, dash, "Visualizar")
+Rel(dash, db, "Carregar dados")
+@enduml
